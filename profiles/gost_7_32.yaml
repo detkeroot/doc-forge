@@ -1,0 +1,93 @@
+# Файл: /home/detker/Документы/repository/doc-forge/profiles/gost_7_32.yaml
+meta:
+  name: "gost_7_32"
+  institution: "Стандарт ГОСТ 7.32-2017"
+  standard: "ГОСТ 7.32-2017"
+  description: "Отчет о научно-исследовательской работе. Структура и правила оформления"
+
+page:
+  format: "A4"
+  orientation: "portrait"
+  margins:
+    left_mm: 30.0
+    right_mm: 15.0
+    top_mm: 20.0
+    bottom_mm: 20.0
+  page_numbering:
+    enabled: true
+    start_from_page: 2
+    position: "top_right"
+    font_family: "Times New Roman"
+    font_size_pt: 12.0
+
+body:
+  font_family: "Times New Roman"
+  font_size_pt: 14.0
+  line_spacing: 1.5
+  first_line_indent_cm: 1.25
+  alignment: "JUSTIFY"
+  spacing_before_pt: 0.0
+  spacing_after_pt: 0.0
+
+headings:
+  h1:
+    font_family: "Times New Roman"
+    font_size_pt: 14.0
+    bold: true
+    all_caps: true
+    alignment: "CENTER"
+    spacing_before_pt: 12.0
+    spacing_after_pt: 12.0
+    page_break_before: true
+    keep_with_next: true
+  h2:
+    font_family: "Times New Roman"
+    font_size_pt: 14.0
+    bold: true
+    all_caps: false
+    alignment: "LEFT"
+    first_line_indent_cm: 1.25
+    spacing_before_pt: 12.0
+    spacing_after_pt: 6.0
+    keep_with_next: true
+  h3:
+    font_family: "Times New Roman"
+    font_size_pt: 14.0
+    bold: false
+    italic: true
+    alignment: "LEFT"
+    first_line_indent_cm: 1.25
+    spacing_before_pt: 6.0
+    spacing_after_pt: 6.0
+    keep_with_next: true
+
+elements:
+  tables:
+    font_family: "Times New Roman"
+    font_size_pt: 12.0
+    line_spacing: 1.0
+    caption_format: "Таблица {id} — {title}"
+    caption_alignment: "LEFT"
+  lists:
+    bullet_style: "dash"
+    first_line_indent_cm: 1.25
+  references:
+    font_family: "Times New Roman"
+    font_size_pt: 14.0
+    first_line_indent_cm: 1.25
+
+title_defaults:
+  ministry: "МИНИСТЕРСТВО НАУКИ И ВЫСШЕГО ОБРАЗОВАНИЯ РОССИЙСКОЙ ФЕДЕРАЦИИ"
+  institution: "ФГБОУ ВО «Самарский государственный технический университет»"
+  faculty: "Институт автоматики и информационных технологий"
+  department: "Кафедра вычислительной техники"
+  specialty: "09.03.01 Информатика и вычислительная техника"
+  work_type: "ВЫПУСКНАЯ КВАЛИФИКАЦИОННАЯ РАБОТА"
+  discipline: null
+  theme: "Исследование и разработка распределенной системы декларативной обработки потоков документов"
+  student_name: "Еткарев Д. О."
+  student_group: "гр. ИВТ-120"
+  supervisor_name: "Смирнов С. А."
+  supervisor_title: "д.т.н., профессор"
+  city: "Самара"
+  year: 2026
