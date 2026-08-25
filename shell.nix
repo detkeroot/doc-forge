@@ -11,6 +11,14 @@ let
     jinja2
     typer
     rich
+    pypdf
+    pdfplumber
+    pymupdf
+    openpyxl
+    python-pptx
+    striprtf
+    beautifulsoup4
+    tabulate
   ]);
 in
 pkgs.mkShell {
