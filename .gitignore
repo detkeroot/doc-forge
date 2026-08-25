@@ -1,0 +1,22 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Output test files
+output/
+*.docx
+*.pdf
+output_*.md
+output_*.docx
+output_*.pdf
+test_*.docx
+test_*.pdf
+test_*.yaml
+test_inspected.yaml
+profiles/converted_*.yaml
+profiles/inspected_*.yaml
+
+# Environment
+.direnv/
+.venv/
