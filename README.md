@@ -25,7 +25,7 @@
 ## 📦 Быстрый старт (NixOS / Flakes / DevShell)
 
 ```bash
-cd /home/detker/Документы/repository/doc-forge
+cd doc-forge
 
 # Активация изолированного окружения со всеми зависимостями:
 nix develop

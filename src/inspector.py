@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/inspector.py
+# Файл: src/inspector.py
 """
 Модуль инспекции и реверс-инжиниринга документов (DOCX, PDF, etc.) в декларативные YAML-профили ГОСТ.
 """

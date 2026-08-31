@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/converters/base.py
+# Файл: src/converters/base.py
 """
 Базовые интерфейсы и классы данных для подсистемы универсальной конвертации документов.
 """

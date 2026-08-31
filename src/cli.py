@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/cli.py
+# Файл: src/cli.py
 """
 Консольный интерфейс (CLI) комплекса Doc-Forge:
 - Двусторонняя конвертация (Все форматы <-> Markdown)

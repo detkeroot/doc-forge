@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/schema.py
+# Файл: src/schema.py
 """
 Pydantic схемы валидации декларативных профилей оформления документов (ГОСТ / СТО).
 """
@@ -142,9 +142,9 @@ class TitleDefaults(BaseModel):
     work_type: str = Field(default="КУРСОВОЙ ПРОЕКТ")
     discipline: Optional[str] = Field(default="МДК 01.01 Разработка программных модулей")
     theme: str = Field(default="Тема курсового проекта")
-    student_name: str = Field(default="Еткарев Д. О.")
+    student_name: str = Field(default="Иванов И. И.")
     student_group: str = Field(default="гр. ИСП-24")
-    supervisor_name: str = Field(default="Иванов И. И.")
+    supervisor_name: str = Field(default="Петров П. П.")
     supervisor_title: str = Field(default="преподаватель")
     city: str = Field(default="Самара")
     year: int = Field(default=2026)

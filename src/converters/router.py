@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/converters/router.py
+# Файл: src/converters/router.py
 """
 Универсальный маршрутизатор (Router) конвертации документов в Markdown и профили ГОСТ.
 """

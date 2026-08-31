@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/compiler.py
+# Файл: src/compiler.py
 """
 Компилятор Markdown -> DOCX с применением профиля оформления ГОСТ.
 """

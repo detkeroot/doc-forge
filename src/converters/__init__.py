@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/converters/__init__.py
+# Файл: src/converters/__init__.py
 """
 Подсистема универсальной конвертации документов (PDF, DOCX, XLSX, PPTX, RTF, EPUB, CSV) в структурированный Markdown.
 """

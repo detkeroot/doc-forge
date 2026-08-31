@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/converters/pdf_engine.py
+# Файл: src/converters/pdf_engine.py
 """
 Движок глубокого анализа и конвертации PDF документов в структурированный Markdown + профиль ГОСТ.
 """

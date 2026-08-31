@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/shell.nix
+# Файл: shell.nix
 { pkgs ? import <nixpkgs> {} }:
 
 let

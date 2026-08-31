@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/converters/csv_engine.py
+# Файл: src/converters/csv_engine.py
 """
 Движок конвертации CSV / TSV файлов в таблицы Markdown.
 """
