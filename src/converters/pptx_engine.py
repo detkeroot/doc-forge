@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/converters/pptx_engine.py
+# Файл: src/converters/pptx_engine.py
 """
 Движок конвертации презентаций PowerPoint (.pptx) в структурированный Markdown.
 """

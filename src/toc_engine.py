@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/toc_engine.py
+# Файл: src/toc_engine.py
 """
 Генератор оглавления (СОДЕРЖАНИЕ) по ГОСТу с отточиями (leader dots) и точными номерами страниц.
 """

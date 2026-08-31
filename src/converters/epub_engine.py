@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/converters/epub_engine.py
+# Файл: src/converters/epub_engine.py
 """
 Движок конвертации электронных книг EPUB (.epub) в структурированный Markdown.
 """

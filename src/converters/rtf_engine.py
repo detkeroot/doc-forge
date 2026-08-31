@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/converters/rtf_engine.py
+# Файл: src/converters/rtf_engine.py
 """
 Движок конвертации RTF (Rich Text Format) документов в Markdown.
 """

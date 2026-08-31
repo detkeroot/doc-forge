@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/converters/docx_engine.py
+# Файл: src/converters/docx_engine.py
 """
 Движок глубокого анализа и конвертации файлов DOCX в семантический Markdown + профиль ГОСТ.
 """

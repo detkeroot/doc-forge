@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/profiles/samek.yaml
+# Файл: profiles/samek.yaml
 # Профиль нормоконтроля: ГБПОУ «Самарский металлургический колледж» (СаМеК)
 # Стандарт: СТО СаМеК 2026 / ГОСТ 7.32-2017
 
@@ -110,7 +110,7 @@ title_defaults:
   theme: "Разработка модульной подсистемы генерации и верификации академических документов"
   student_name: "Иванов И. И."
   student_group: "гр. ИСП-24"
-  supervisor_name: "Смирнов А. В."
+  supervisor_name: "Петров П. П."
   supervisor_title: "преподаватель высшей категории"
   city: "Самара"
   year: 2026

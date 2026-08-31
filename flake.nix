@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/flake.nix
+# Файл: flake.nix
 {
   description = "Doc-Forge: Декларативный компилятор и инспектор академических документов по ГОСТу";
 

@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/title_engine.py
+# Файл: src/title_engine.py
 """
 Генератор титульных листов с жестким соблюдением сетки ГОСТ и защитой от съезжания верстки.
 """

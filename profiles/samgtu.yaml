@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/profiles/samgtu.yaml
+# Файл: profiles/samgtu.yaml
 # Стандарт: СТО СамГТУ (Самарский государственный технический университет)
 
 meta:
@@ -109,7 +109,7 @@ title_defaults:
   theme: "Разработка высокопроизводительной подсистемы декларативной генерации отчетов"
   student_name: "Иванов И. И."
   student_group: "гр. ИТ-24"
-  supervisor_name: "Кузнецов В. А."
+  supervisor_name: "Петров П. П."
   supervisor_title: "канд. техн. наук, доцент"
   city: "Самара"
   year: 2026

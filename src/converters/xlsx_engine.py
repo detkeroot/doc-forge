@@ -1,4 +1,4 @@
-# Файл: /home/detker/Документы/repository/doc-forge/src/converters/xlsx_engine.py
+# Файл: src/converters/xlsx_engine.py
 """
 Движок конвертации таблиц Excel (.xlsx, .xls) в Markdown с сохранением структуры листов.
 """
