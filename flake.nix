@@ -45,6 +45,7 @@
         };
 
         packages.default = pkgs.writeShellScriptBin "doc-forge" ''
+          export PYTHONPATH="${./.}:$PYTHONPATH"
           exec ${pythonEnv}/bin/python3 ${./src/cli.py} "$@"
         '';
       }
