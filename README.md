@@ -75,7 +75,7 @@ doc-forge --help
 ### Разработка через Nix Flake DevShell
 Если требуется модифицировать исходный код компилятора:
 ```bash
-cd ~/Документы/repository/doc-forge
+cd ~/Документы/repository/detker/doc-forge
 
 # Активация изолированного окружения со всеми зависимостями:
 nix develop
