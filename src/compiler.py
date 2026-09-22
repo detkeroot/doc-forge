@@ -139,13 +139,24 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path):
     """
     fm, body_md = parse_frontmatter(md_content)
 
+    # Клонируем профиль для безопасных локальных переопределений из Frontmatter
+    profile = profile.model_copy(deep=True)
+    if "body" in fm and isinstance(fm["body"], dict):
+        for k, v in fm["body"].items():
+            if hasattr(profile.body, k):
+                setattr(profile.body, k, v)
+    if "page" in fm and isinstance(fm["page"], dict):
+        if "margins" in fm["page"] and isinstance(fm["page"]["margins"], dict):
+            for k, v in fm["page"]["margins"].items():
+                if hasattr(profile.page.margins, k):
+                    setattr(profile.page.margins, k, v)
+
     # Обновляем метаданные титульного листа из Frontmatter, если есть
     title_data = profile.title_defaults.model_copy()
     if "title" in fm and isinstance(fm["title"], dict):
         for k, v in fm["title"].items():
             if hasattr(title_data, k):
                 setattr(title_data, k, v)
-
     doc = Document()
 
     # 1. Генерируем титульный лист (Стр. 1), если не отключен
@@ -357,11 +368,8 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path):
             i += 1
             continue
 
-        # Обычный параграф текста с поддержкой тегов выравнивания и кегля
-        align_override = None
-        size_override = None
         clean_line = line
-        m_align = re.match(r'^<(center|right|left)(?::(\d+(?:\.\d+)?))?>(.*)</\1>$', clean_line, flags=re.DOTALL)
+        m_align = re.match(r'^<(center|right|left)(?::(\d+(?:\.\d+)?))?>(.*?)</\1(?::(?:\d+(?:\.\d+)?))?>$', clean_line, flags=re.DOTALL)
         if m_align:
             tag, sz, content = m_align.group(1), m_align.group(2), m_align.group(3)
             align_map = {
