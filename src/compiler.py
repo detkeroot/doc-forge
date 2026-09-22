@@ -16,7 +16,7 @@ from docx.oxml import OxmlElement, parse_xml
 from docx.oxml.ns import nsdecls, qn
 
 from src.schema import DocProfile, TitleDefaults, TextStyle
-from src.title_engine import create_title_page
+from src.title_engine import create_title_page, setup_page_numbering
 from src.toc_engine import create_table_of_contents
 
 
@@ -106,20 +106,21 @@ def add_formatted_runs(p, text: str, base_style: TextStyle, all_caps: bool = Fal
         r.font.size = Pt(base_style.font_size_pt)
 
 
-def set_cell_margins_and_borders(cell, top=100, bottom=100, left=150, right=150):
+def set_cell_margins_and_borders(cell, top=100, bottom=100, left=150, right=150, borders: bool = True):
     """
-    Устанавливает внутренние отступы (padding) и тонкие черные границы для ячейки таблицы.
+    Устанавливает внутренние отступы (padding) и опциональные тонкие черные границы для ячейки таблицы.
     """
     tcPr = cell._tc.get_or_add_tcPr()
-    tcBorders = parse_xml(r'''
-        <w:tcBorders %s>
-            <w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-            <w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-            <w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-            <w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/>
-        </w:tcBorders>
-    ''' % nsdecls('w'))
-    tcPr.append(tcBorders)
+    if borders:
+        tcBorders = parse_xml(r'''
+            <w:tcBorders %s>
+                <w:top w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+                <w:left w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+                <w:bottom w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+                <w:right w:val="single" w:sz="4" w:space="0" w:color="000000"/>
+            </w:tcBorders>
+        ''' % nsdecls('w'))
+        tcPr.append(tcBorders)
 
     tcMar = parse_xml(r'''
         <w:tcMar %s>
@@ -147,9 +148,27 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path):
 
     doc = Document()
 
-    # 1. Генерируем титульный лист (Стр. 1)
-    create_title_page(doc, profile, title_data)
-
+    # 1. Генерируем титульный лист (Стр. 1), если не отключен
+    has_title_page = fm.get("title_page", True) and not fm.get("no_title", False)
+    if has_title_page:
+        create_title_page(doc, profile, title_data)
+    else:
+        sec_main = doc.sections[0]
+        sec_main.page_width = Mm(210)
+        sec_main.page_height = Mm(297)
+        sec_main.left_margin = Mm(profile.page.margins.left_mm)
+        sec_main.right_margin = Mm(profile.page.margins.right_mm)
+        sec_main.top_margin = Mm(profile.page.margins.top_mm)
+        sec_main.bottom_margin = Mm(profile.page.margins.bottom_mm)
+        if profile.page.page_numbering.enabled and fm.get("page_numbering", False):
+            setup_page_numbering(sec_main, profile)
+        else:
+            sec_main.header.is_linked_to_previous = False
+            sec_main.footer.is_linked_to_previous = False
+            for p_h in sec_main.header.paragraphs:
+                p_h.text = ""
+            for p_f in sec_main.footer.paragraphs:
+                p_f.text = ""
     # 2. Генерируем оглавление (Стр. 2), если есть
     toc_items = []
     if "toc" in fm and isinstance(fm["toc"], list):
@@ -214,6 +233,18 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path):
             table_caption = line
             i += 1
             continue
+        elif line in ("<!-- borderless -->", "<borderless>"):
+            table_caption = line
+            i += 1
+            continue
+        elif line in ("<br>", "<empty>"):
+            p_br = doc.add_paragraph()
+            p_br.paragraph_format.space_before = Pt(0)
+            p_br.paragraph_format.space_after = Pt(0)
+            p_br.paragraph_format.line_spacing = 1.0
+            p_br.paragraph_format.first_line_indent = Mm(0)
+            i += 1
+            continue
 
         # Начало таблицы Markdown (| a | b |)
         if line.startswith("|") and line.endswith("|"):
@@ -227,8 +258,9 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path):
                 i += 1
 
             if table_rows:
+                is_borderless = table_caption in ("<!-- borderless -->", "<borderless>")
                 # Вставляем подпись таблицы перед таблицей
-                if table_caption:
+                if table_caption and not is_borderless:
                     p_cap = doc.add_paragraph()
                     p_cap.alignment = WD_ALIGN_PARAGRAPH.LEFT
                     p_cap.paragraph_format.first_line_indent = Mm(profile.body.first_line_indent_cm * 10)
@@ -238,8 +270,7 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path):
                     r_cap = p_cap.add_run(table_caption)
                     r_cap.font.name = profile.elements.tables.font_family
                     r_cap.font.size = Pt(profile.elements.tables.font_size_pt)
-                    table_caption = ""
-
+                table_caption = ""
                 # Создаем саму таблицу
                 num_rows = len(table_rows)
                 num_cols = len(table_rows[0])
@@ -258,21 +289,24 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path):
                     for c_idx, cell_value in enumerate(row_data):
                         if c_idx < num_cols:
                             cell = tbl.cell(r_idx, c_idx)
-                            set_cell_margins_and_borders(cell)
+                            set_cell_margins_and_borders(cell, borders=not is_borderless)
                             p_cell = cell.paragraphs[0]
-                            p_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
                             p_cell.paragraph_format.space_before = Pt(2)
                             p_cell.paragraph_format.space_after = Pt(2)
                             p_cell.paragraph_format.line_spacing = profile.elements.tables.line_spacing
                             p_cell.paragraph_format.first_line_indent = Mm(0)
                             
-                            r_c = p_cell.add_run(cell_value)
-                            r_c.font.name = profile.elements.tables.font_family
-                            r_c.font.size = Pt(profile.elements.tables.font_size_pt)
-                            if r_idx == 0:
-                                r_c.font.bold = True
-                                p_cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
-
+                            if is_borderless:
+                                p_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                                add_formatted_runs(p_cell, cell_value, profile.body)
+                            else:
+                                p_cell.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                                r_c = p_cell.add_run(cell_value)
+                                r_c.font.name = profile.elements.tables.font_family
+                                r_c.font.size = Pt(profile.elements.tables.font_size_pt)
+                                if r_idx == 0:
+                                    r_c.font.bold = True
+                                    p_cell.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 # Отступ после таблицы
                 p_after_tbl = doc.add_paragraph()
                 p_after_tbl.paragraph_format.space_before = Pt(0)
@@ -323,10 +357,38 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path):
             i += 1
             continue
 
-        # Обычный параграф текста
+        # Обычный параграф текста с поддержкой тегов выравнивания и кегля
+        align_override = None
+        size_override = None
+        clean_line = line
+        m_align = re.match(r'^<(center|right|left)(?::(\d+(?:\.\d+)?))?>(.*)</\1>$', clean_line, flags=re.DOTALL)
+        if m_align:
+            tag, sz, content = m_align.group(1), m_align.group(2), m_align.group(3)
+            align_map = {
+                "center": WD_ALIGN_PARAGRAPH.CENTER,
+                "right": WD_ALIGN_PARAGRAPH.RIGHT,
+                "left": WD_ALIGN_PARAGRAPH.LEFT
+            }
+            align_override = align_map.get(tag)
+            if sz:
+                size_override = float(sz)
+            clean_line = content.strip()
+
+        cur_style = profile.body
+        if size_override is not None:
+            cur_style = cur_style.model_copy()
+            cur_style.font_size_pt = size_override
+            cur_style.line_spacing = 1.15
+
         p = doc.add_paragraph()
-        apply_paragraph_style(p, profile.body, profile)
-        add_formatted_runs(p, line, profile.body)
+        apply_paragraph_style(p, cur_style, profile)
+        if align_override is not None:
+            p.alignment = align_override
+            p.paragraph_format.first_line_indent = Mm(0)
+            if size_override is not None:
+                p.paragraph_format.space_before = Pt(1)
+                p.paragraph_format.space_after = Pt(1)
+        add_formatted_runs(p, clean_line, cur_style)
         i += 1
 
     # Сохраняем файл
