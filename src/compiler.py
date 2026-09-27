@@ -206,6 +206,30 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path):
             doc.add_page_break()
             i += 1
             continue
+        # Блоки кода и рецептурных прописей (```)
+        if line.startswith("```"):
+            i += 1
+            code_lines = []
+            while i < len(lines) and not lines[i].strip().startswith("```"):
+                code_lines.append(lines[i])
+                i += 1
+            if i < len(lines) and lines[i].strip().startswith("```"):
+                i += 1
+            
+            for c_line in code_lines:
+                p = doc.add_paragraph()
+                pf = p.paragraph_format
+                pf.line_spacing = 1.15
+                pf.space_before = Pt(1)
+                pf.space_after = Pt(1)
+                pf.left_indent = Mm(15)
+                pf.first_line_indent = Mm(0)
+                p.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                r = p.add_run(c_line)
+                r.font.name = "Consolas"
+                r.font.size = Pt(11)
+                r.font.bold = True
+            continue
 
         # Заголовок 1 уровня (# ЗАГОЛОВОК)
         if line.startswith("# ") and not line.startswith("## "):
@@ -369,6 +393,8 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path):
             continue
 
         clean_line = line
+        align_override = None
+        size_override = None
         m_align = re.match(r'^<(center|right|left)(?::(\d+(?:\.\d+)?))?>(.*?)</\1(?::(?:\d+(?:\.\d+)?))?>$', clean_line, flags=re.DOTALL)
         if m_align:
             tag, sz, content = m_align.group(1), m_align.group(2), m_align.group(3)
