@@ -22,6 +22,7 @@ from src.schema import DocProfile
 from src.compiler import build_document, parse_frontmatter
 from src.inspector import inspect_document, save_profile_to_yaml
 from src.converters.router import convert_document
+from src.deck_builder import build_presentation
 
 app = typer.Typer(
     name="doc-forge",
@@ -228,6 +229,41 @@ def build_cmd(
         ))
     except Exception as e:
         console.print(f"[bold red]❌ Ошибка при сборке документа:[/bold red] {e}")
+        raise typer.Exit(1)
+
+
+
+@app.command("deck")
+def deck_cmd(
+    input_file: Path = typer.Argument(..., help="Путь к входному Markdown файлу презентации"),
+    output: Optional[Path] = typer.Option(None, "-o", "--output", help="Путь к результирующему файлу .pptx"),
+):
+    """
+    [ПРЕЗЕНТАЦИИ] Собрать нативную, 100% редактируемую презентацию PPTX (16:9) с автоскачиванием изображений.
+    """
+    if not input_file.exists():
+        console.print(f"[bold red]❌ Ошибка:[/bold red] Файл презентации '{input_file}' не найден!")
+        raise typer.Exit(1)
+
+    out_path = output or input_file.with_suffix(".pptx")
+    console.print(f"[cyan]🎨 Сборка презентации PowerPoint (16:9):[/cyan] {input_file.name} -> [bold green]{out_path.name}[/bold green]")
+    console.print("[dim]Инварианты: 100% редактируемый текст, нативные фигуры, автоскачивание картинок.[/dim]")
+
+    with open(input_file, "r", encoding="utf-8") as f:
+        md_text = f.read()
+
+    try:
+        build_presentation(md_text, out_path)
+        console.print(Panel.fit(
+            f"[bold green]✓ Нативная презентация PPTX успешно создана:[/bold green] [bold]{out_path}[/bold]\n"
+            f"[dim]Все элементы (текст, карточки, таблицы) полностью редактируемы в PowerPoint, Impress и DeckCraft.[/dim]",
+            title="Doc-Forge Deck Успех",
+            border_style="green",
+        ))
+    except Exception as e:
+        console.print(f"[bold red]❌ Ошибка при сборке презентации:[/bold red] {e}")
+        import traceback
+        console.print(f"[dim]{traceback.format_exc()}[/dim]")
         raise typer.Exit(1)
 
 
