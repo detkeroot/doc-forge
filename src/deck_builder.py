@@ -55,15 +55,19 @@ class SlideData:
         self.is_final_slide: bool = False
 
 
-def download_image_if_url(img_source: str, cache_dir: Path) -> Optional[Path]:
+def download_image_if_url(img_source: str, cache_dir: Path, base_dir: Optional[Path] = None) -> Optional[Path]:
     """
     Скачивает изображение по URL или возвращает путь к локальному файлу.
     """
     if not img_source:
         return None
 
-    # Локальный файл
+    # Проверяем локальный файл (абсолютный или относительно base_dir)
     local_p = Path(img_source)
+    if local_p.is_absolute() and local_p.exists():
+        return local_p
+    if base_dir and (base_dir / img_source).exists():
+        return base_dir / img_source
     if local_p.exists():
         return local_p
 
@@ -364,7 +368,7 @@ def _render_content_slide(slide, s: SlideData, width, height, cache_dir: Path):
     div_line.fill.fore_color.rgb = COLOR_CARD_BORDER
     div_line.line.color.rgb = COLOR_CARD_BORDER
 
-    img_file = download_image_if_url(s.image_path, cache_dir) if s.image_path else None
+    img_file = download_image_if_url(s.image_path, cache_dir, base_dir=cache_dir.parent) if s.image_path else None
 
     content_top = Inches(1.7)
     content_height = height - Inches(2.2)

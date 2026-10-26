@@ -23,6 +23,13 @@ from src.compiler import build_document, parse_frontmatter
 from src.inspector import inspect_document, save_profile_to_yaml
 from src.converters.router import convert_document
 from src.deck_builder import build_presentation
+from src.artcraft_bridge import (
+    fast_convert_docx_to_pdf,
+    render_page_preview,
+    inspect_document_structure,
+    open_in_artcraft,
+    is_artcraft_available,
+)
 
 app = typer.Typer(
     name="doc-forge",
@@ -58,10 +65,18 @@ def load_profile(name_or_path: str) -> DocProfile:
     return DocProfile.model_validate(data)
 
 
-def export_docx_to_pdf(docx_path: Path, output_pdf: Optional[Path] = None) -> Path:
+def export_docx_to_pdf(docx_path: Path, output_pdf: Optional[Path] = None, engine: str = "artcraft") -> Path:
     """
-    Экспортирует сгенерированный DOCX в PDF с помощью LibreOffice в headless режиме.
+    Экспортирует сгенерированный DOCX в PDF.
+    По умолчанию использует сверхбыстрый нативный движок ArtCraft WordCraft (~50 мс) с авто-фоллбэком на LibreOffice.
+    Если передан engine="libreoffice", использует LibreOffice напрямую.
     """
+    if engine == "artcraft" and is_artcraft_available():
+        try:
+            return fast_convert_docx_to_pdf(docx_path, output_pdf, fallback_to_libreoffice=True)
+        except Exception as e:
+            console.print(f"[dim yellow]⚠️ ArtCraft PDF экспорт вернул ошибку ({e}), переключаемся на LibreOffice...[/dim yellow]")
+
     out_dir = output_pdf.parent if output_pdf else docx_path.parent
     cmd = ["libreoffice", "--headless", "--convert-to", "pdf", str(docx_path), "--outdir", str(out_dir)]
     res = subprocess.run(cmd, capture_output=True, text=True)
@@ -182,7 +197,8 @@ def build_cmd(
     input_file: Path = typer.Argument(..., help="Путь к входному .md файлу"),
     profile_name: Optional[str] = typer.Option(None, "-p", "--profile", help="Имя или путь к YAML профилю"),
     output: Optional[Path] = typer.Option(None, "-o", "--output", help="Путь к результирующему .docx файлу"),
-    pdf: bool = typer.Option(False, "--pdf", help="Автоматически экспортировать результат в PDF через LibreOffice"),
+    pdf: bool = typer.Option(False, "--pdf", help="Автоматически экспортировать результат в PDF"),
+    engine: str = typer.Option("artcraft", "--engine", help="Движок экспорта в PDF: 'artcraft' (быстрый ~50мс) или 'libreoffice'"),
 ):
     """
     [ОБРАТНЫЙ ХОД] Скомпилировать Markdown документ в стилизованный DOCX (и PDF) по профилю ГОСТ.
@@ -218,8 +234,9 @@ def build_cmd(
 
         if pdf:
             pdf_path = out_path.with_suffix(".pdf")
-            console.print(f"[cyan]🖨️ Экспорт в PDF (LibreOffice Headless):[/cyan] {pdf_path.name}")
-            export_docx_to_pdf(out_path, pdf_path)
+            engine_label = "ArtCraft WordCraft" if engine == "artcraft" and is_artcraft_available() else "LibreOffice Headless"
+            console.print(f"[cyan]🖨️ Экспорт в PDF ({engine_label}):[/cyan] {pdf_path.name}")
+            export_docx_to_pdf(out_path, pdf_path, engine=engine)
             messages.append(f"[bold green]✓ Документ PDF успешно создан:[/bold green] {pdf_path}")
 
         console.print(Panel.fit(
@@ -272,6 +289,7 @@ def test_cmd(
     profile_name: str = typer.Argument("samek", help="Имя профиля для генерации теста"),
     output: Optional[Path] = typer.Option(None, "-o", "--output", help="Путь для сохранения тестового .docx"),
     pdf: bool = typer.Option(False, "--pdf", help="Автоматически сгенерировать также PDF"),
+    engine: str = typer.Option("artcraft", "--engine", help="Движок экспорта в PDF: 'artcraft' (быстрый ~50мс) или 'libreoffice'"),
 ):
     """
     Сгенерировать эталонный 4-страничный тестовый документ (Титульник + Содержание + Введение + Разд. 1.1 + Разд. 1.2) для проверки верстки.
@@ -308,7 +326,7 @@ def test_cmd(
         
         if pdf:
             pdf_path = out_path.with_suffix(".pdf")
-            export_docx_to_pdf(out_path, pdf_path)
+            export_docx_to_pdf(out_path, pdf_path, engine=engine)
             messages.append(f"[bold green]✓ Тестовый PDF создан:[/bold green] [bold]{pdf_path}[/bold]")
 
         console.print(Panel.fit(
@@ -445,6 +463,102 @@ def set_cmd(
         console.print(f"[bold red]❌ Ошибка валидации нового значения:[/bold red] {e}")
         raise typer.Exit(1)
 
+
+@app.command("preview")
+def preview_cmd(
+    input_file: Path = typer.Argument(..., help="Путь к документу (DOCX, PDF, PPTX)"),
+    page: int = typer.Option(1, "-p", "--page", help="Номер страницы / слайда для рендера (с 1)"),
+    output: Optional[Path] = typer.Option(None, "-o", "--output", help="Путь для сохранения PNG-превью"),
+    dpi: int = typer.Option(96, "--dpi", help="DPI для рендера (по умолчанию 96)"),
+):
+    """
+    [ВИЗУАЛЬНЫЙ КОНТРОЛЬ] Мгновенно отрендерить страницу документа (DOCX, PDF, PPTX) в PNG через ArtCraft.
+    """
+    if not input_file.exists():
+        console.print(f"[bold red]❌ Ошибка:[/bold red] Файл '{input_file}' не найден!")
+        raise typer.Exit(1)
+
+    console.print(f"[cyan]🖼️ Рендер страницы {page}:[/cyan] {input_file.name} -> PNG")
+    try:
+        out_png = render_page_preview(input_file, page=page, out_path=output, dpi=dpi)
+        console.print(Panel.fit(
+            f"[bold green]✓ Превью страницы {page} успешно создано:[/bold green] [bold]{out_png}[/bold]\n"
+            f"[dim]Размер: {out_png.stat().st_size // 1024} КБ | Готово для проверки vision-моделью или в просмотрщике.[/dim]",
+            title="Doc-Forge Preview Успех",
+            border_style="green",
+        ))
+    except Exception as e:
+        console.print(f"[bold red]❌ Ошибка при рендере превью:[/bold red] {e}")
+        raise typer.Exit(1)
+
+
+@app.command("audit")
+def audit_cmd(
+    input_file: Path = typer.Argument(..., help="Путь к файлу для аудита (DOCX, PDF, PPTX)"),
+    json_out: bool = typer.Option(False, "--json", help="Вывести результат в сыром формате JSON"),
+):
+    """
+    [СТРУКТУРНЫЙ АУДИТ] Глубокий аудит структуры, метрик и времени компоновки через Rust-движки ArtCraft.
+    """
+    if not input_file.exists():
+        console.print(f"[bold red]❌ Ошибка:[/bold red] Файл '{input_file}' не найден!")
+        raise typer.Exit(1)
+
+    try:
+        info = inspect_document_structure(input_file)
+        if json_out:
+            import json
+            print(json.dumps(info, indent=2, ensure_ascii=False))
+            return
+
+        table = Table(title=f"📊 Аудит документа: {input_file.name}", border_style="cyan")
+        table.add_column("Метрика", style="bold yellow")
+        table.add_column("Значение", style="green")
+
+        if "pages" in info:
+            table.add_row("Количество страниц / слайдов", str(info["pages"]))
+        if "words" in info:
+            table.add_row("Количество слов", str(info["words"]))
+        if "paragraphs" in info:
+            table.add_row("Количество абзацев", str(info["paragraphs"]))
+        if "sections" in info:
+            table.add_row("Разделов (секций)", str(info["sections"]))
+        if "layoutMs" in info:
+            table.add_row("Время верстки (layoutMs)", f"{info['layoutMs']:.2f} мс")
+        if "pdf_version" in info:
+            table.add_row("Версия PDF", str(info["pdf_version"]))
+        if "tagged" in info:
+            table.add_row("Структурные теги (Tagged PDF)", "Да" if info["tagged"] else "Нет")
+        if "creator" in info:
+            table.add_row("Создатель (Creator)", str(info["creator"]))
+        if "file_size" in info:
+            table.add_row("Размер файла", f"{info['file_size'] // 1024} КБ")
+
+        console.print(table)
+    except Exception as e:
+        console.print(f"[bold red]❌ Ошибка при аудите документа:[/bold red] {e}")
+        raise typer.Exit(1)
+
+
+@app.command("open")
+def open_cmd(
+    input_file: Path = typer.Argument(..., help="Путь к файлу для открытия"),
+    control: Optional[int] = typer.Option(None, "-c", "--control", help="Порт управления для подключения ИИ-агента через MCP"),
+):
+    """
+    [ИНТЕРАКТИВНЫЙ РЕДАКТОР] Мгновенно открыть документ в соответствующем приложении ArtCraft (WordCraft, DeckCraft, PdfCraft).
+    """
+    if not input_file.exists():
+        console.print(f"[bold red]❌ Ошибка:[/bold red] Файл '{input_file}' не найден!")
+        raise typer.Exit(1)
+
+    try:
+        proc = open_in_artcraft(input_file, control_port=control)
+        ctl_msg = f" (порт управления: {control})" if control else ""
+        console.print(f"[bold green]✓ Документ '{input_file.name}' открыт в ArtCraft{ctl_msg} (PID: {proc.pid})[/bold green]")
+    except Exception as e:
+        console.print(f"[bold red]❌ Ошибка запуска ArtCraft:[/bold red] {e}")
+        raise typer.Exit(1)
 
 if __name__ == "__main__":
     app()
