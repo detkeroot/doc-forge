@@ -133,7 +133,7 @@ def set_cell_margins_and_borders(cell, top=100, bottom=100, left=150, right=150,
     tcPr.append(tcMar)
 
 
-def build_document(md_content: str, profile: DocProfile, output_path: Path):
+def build_document(md_content: str, profile: DocProfile, output_path: Path, base_dir: Optional[Path] = None):
     """
     Главная функция сборки Markdown -> DOCX с применением профиля.
     """
@@ -348,6 +348,39 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path):
                 p_after_tbl.paragraph_format.space_after = Pt(profile.elements.tables.spacing_after_pt)
                 p_after_tbl.paragraph_format.line_spacing = 1.0
                 p_after_tbl.paragraph_format.first_line_indent = Mm(0)
+            continue
+
+        # Изображения Markdown: ![Подпись](путь/к/картинке.png)
+        img_match = re.match(r'^!\[(.*?)\]\((.*?)\)$', line)
+        if img_match:
+            caption = img_match.group(1).strip()
+            img_rel = img_match.group(2).strip()
+            img_path = Path(img_rel)
+            if not img_path.is_absolute() and base_dir:
+                img_path = (base_dir / img_path).resolve()
+            elif not img_path.is_absolute():
+                img_path = img_path.resolve()
+
+            if img_path.exists():
+                p_img = doc.add_paragraph()
+                p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                p_img.paragraph_format.space_before = Pt(8)
+                p_img.paragraph_format.space_after = Pt(2)
+                p_img.paragraph_format.first_line_indent = Mm(0)
+                r_img = p_img.add_run()
+                r_img.add_picture(str(img_path), width=Mm(155))
+
+                if caption:
+                    p_cap = doc.add_paragraph()
+                    p_cap.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    p_cap.paragraph_format.first_line_indent = Mm(0)
+                    p_cap.paragraph_format.space_before = Pt(2)
+                    p_cap.paragraph_format.space_after = Pt(8)
+                    r_cap = p_cap.add_run(caption)
+                    r_cap.font.name = profile.body.font_family
+                    r_cap.font.size = Pt(11.0)
+                    r_cap.font.italic = False
+            i += 1
             continue
 
         # Маркированные списки (- пункт или * пункт)

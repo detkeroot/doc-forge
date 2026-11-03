@@ -9,6 +9,7 @@
 import sys
 import subprocess
 from pathlib import Path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from typing import Optional
 
 import typer
@@ -226,7 +227,7 @@ def build_cmd(
     console.print(f"[cyan]📋 Профиль:[/cyan] [bold green]{profile.meta.name}[/bold green] ({profile.meta.institution})")
 
     try:
-        build_document(md_text, profile, out_path)
+        build_document(md_text, profile, out_path, base_dir=input_file.parent.resolve())
         messages = [
             f"[bold green]✓ Документ DOCX успешно создан:[/bold green] {out_path}",
             f"[dim]Стандарт: {profile.meta.standard} | Шрифт: {profile.body.font_family} {profile.body.font_size_pt}pt | Интервал: {profile.body.line_spacing}[/dim]",
