@@ -23,3 +23,6 @@ profiles/inspected_*.yaml
 # Environment
 .direnv/
 .venv/
+
+# Local guides
+gigacode_student_guide.md

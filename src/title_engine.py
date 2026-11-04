@@ -56,25 +56,39 @@ def create_title_page(doc: Document, profile: DocProfile, data: TitleDefaults):
     run_inst.font.size = Pt(13)
     run_inst.font.bold = True
 
-    # 3. Отделение / Факультет
+    # 3. Факультет / Академия
+    if data.faculty:
+        p_fac = doc.add_paragraph()
+        p_fac.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_fac.paragraph_format.space_before = Pt(0)
+        p_fac.paragraph_format.space_after = Pt(2)
+        p_fac.paragraph_format.line_spacing = 1.15
+        run_fac = p_fac.add_run(data.faculty)
+        run_fac.font.name = profile.body.font_family
+        run_fac.font.size = Pt(12)
+
+    # 3b. Отделение / Кафедра
     if data.department:
         p_dep = doc.add_paragraph()
         p_dep.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p_dep.paragraph_format.space_before = Pt(0)
         p_dep.paragraph_format.space_after = Pt(2)
+        p_dep.paragraph_format.line_spacing = 1.15
         run_dep = p_dep.add_run(data.department)
         run_dep.font.name = profile.body.font_family
         run_dep.font.size = Pt(12)
 
     # 4. Специальность
-    p_spec = doc.add_paragraph()
-    p_spec.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_spec.paragraph_format.space_before = Pt(2)
-    p_spec.paragraph_format.space_after = Pt(36)
-    run_spec = p_spec.add_run(f"Специальность: {data.specialty}")
-    run_spec.font.name = profile.body.font_family
-    run_spec.font.size = Pt(12)
-
+    if data.specialty:
+        p_spec = doc.add_paragraph()
+        p_spec.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        p_spec.paragraph_format.space_before = Pt(2)
+        p_spec.paragraph_format.space_after = Pt(24)
+        spec_str = data.specialty.strip()
+        spec_text = spec_str if spec_str.lower().startswith("специальность") else f"Специальность: {spec_str}"
+        run_spec = p_spec.add_run(spec_text)
+        run_spec.font.name = profile.body.font_family
+        run_spec.font.size = Pt(12)
     # 5. Тип работы (КУРСОВОЙ ПРОЕКТ / ДИПЛОМНЫЙ ПРОЕКТ)
     p_type = doc.add_paragraph()
     p_type.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -91,7 +105,14 @@ def create_title_page(doc: Document, profile: DocProfile, data: TitleDefaults):
         p_disc.alignment = WD_ALIGN_PARAGRAPH.CENTER
         p_disc.paragraph_format.space_before = Pt(0)
         p_disc.paragraph_format.space_after = Pt(12)
-        run_disc = p_disc.add_run(f"по МДК / дисциплине: «{data.discipline}»")
+        disc_str = data.discipline.strip()
+        if disc_str.lower().startswith("по "):
+            disc_text = disc_str
+        elif "мдк" in disc_str.lower():
+            disc_text = f"по МДК: «{disc_str}»"
+        else:
+            disc_text = f"по дисциплине: «{disc_str}»"
+        run_disc = p_disc.add_run(disc_text)
         run_disc.font.name = profile.body.font_family
         run_disc.font.size = Pt(13)
 
@@ -144,7 +165,9 @@ def create_title_page(doc: Document, profile: DocProfile, data: TitleDefaults):
     cell_01 = tbl.cell(0, 1)
     p_01 = cell_01.paragraphs[0]
     p_01.alignment = WD_ALIGN_PARAGRAPH.LEFT
-    r = p_01.add_run(f"студент {data.student_group}\n{data.student_name}")
+    grp_str = data.student_group.strip()
+    grp_line = grp_str if grp_str.lower().startswith("студент") else f"студент {grp_str}"
+    r = p_01.add_run(f"{grp_line}\n{data.student_name}")
     r.font.name = profile.body.font_family
     r.font.size = Pt(12)
     r.font.bold = True
@@ -170,9 +193,13 @@ def create_title_page(doc: Document, profile: DocProfile, data: TitleDefaults):
     # 9. Город и год внизу
     p_bottom = doc.add_paragraph()
     p_bottom.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    p_bottom.paragraph_format.space_before = Pt(48)
+    p_bottom.paragraph_format.space_before = Pt(36)
     p_bottom.paragraph_format.space_after = Pt(0)
-    r_bottom = p_bottom.add_run(f"{data.city} – {data.year}")
+    if str(data.year) in str(data.city):
+        bottom_text = str(data.city)
+    else:
+        bottom_text = f"{data.city} - {data.year}"
+    r_bottom = p_bottom.add_run(bottom_text)
     r_bottom.font.name = profile.body.font_family
     r_bottom.font.size = Pt(12)
 

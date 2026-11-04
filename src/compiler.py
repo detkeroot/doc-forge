@@ -47,7 +47,8 @@ def apply_paragraph_style(p, style: TextStyle, doc_profile: DocProfile, is_first
     if style.keep_with_next:
         pf.keep_with_next = True
     pf.widow_control = True
-
+    if style.page_break_before and not is_first_heading:
+        pf.page_break_before = True
 
 def parse_frontmatter(md_text: str) -> Tuple[Dict[str, Any], str]:
     """
@@ -153,10 +154,30 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path, base
 
     # Обновляем метаданные титульного листа из Frontmatter, если есть
     title_data = profile.title_defaults.model_copy()
-    if "title" in fm and isinstance(fm["title"], dict):
-        for k, v in fm["title"].items():
+    if "title_defaults" in fm and isinstance(fm["title_defaults"], dict):
+        for k, v in fm["title_defaults"].items():
             if hasattr(title_data, k):
                 setattr(title_data, k, v)
+    if "title" in fm:
+        if isinstance(fm["title"], dict):
+            for k, v in fm["title"].items():
+                if hasattr(title_data, k):
+                    setattr(title_data, k, v)
+        elif isinstance(fm["title"], str):
+            title_data.theme = fm["title"]
+
+    field_aliases = {
+        "author": "student_name",
+        "student": "student_name",
+        "group": "student_group",
+        "supervisor": "supervisor_name",
+        "topic": "theme",
+    }
+    for k, v in fm.items():
+        target_k = field_aliases.get(k, k)
+        if hasattr(title_data, target_k):
+            setattr(title_data, target_k, v)
+
     doc = Document()
 
     # 1. Генерируем титульный лист (Стр. 1), если не отключен
@@ -395,7 +416,7 @@ def build_document(md_content: str, profile: DocProfile, output_path: Path, base
             p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
 
             # Дефис по ГОСТу
-            marker = "– " if profile.elements.lists.bullet_style == "dash" else "• "
+            marker = "- " if profile.elements.lists.bullet_style == "dash" else "• "
             r_mark = p.add_run(marker)
             r_mark.font.name = profile.body.font_family
             r_mark.font.size = Pt(profile.body.font_size_pt)
